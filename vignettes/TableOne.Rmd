@@ -1,0 +1,104 @@
+---
+title: "Creating a Summary Table (Table One)"
+author: Matt Kent
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{TableOne}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+library(survival)
+library(dplyr)
+library(visR)
+```
+
+To create a simple summary table, we need to convert any factors and then select the variables we want in the table. Using `vr_create_tableone` we can create a simple summary data frame.
+```{r}
+ovarian_tbl_df <- ovarian %>%
+    mutate(
+        age_group = factor(
+            case_when(age <= 50 ~ "<= 50 years",
+                      age <= 60 ~ "<= 60 years",
+                      age <= 70 ~ "<= 70 years",
+                      TRUE ~ "> 70 years")),
+        rx = factor(rx),
+        ecog.ps = factor(ecog.ps)
+    ) %>%
+    select(age, age_group, everything(), -fustat)
+
+ovarian_tbl_df %>%
+    vr_create_tableone()
+```
+
+We can pass in grouping columns as well to get a stratified table.
+```{r}
+ovarian_tbl_df %>%
+    vr_create_tableone(group_columns = "rx")
+```
+
+Or multiple grouping columns
+```{r}
+ovarian_tbl_df %>%
+    vr_create_tableone(group_columns = c("rx", "ecog.ps"))
+```
+
+To render a nicely formatted table use the `vr_render_tableone` function.
+```{r}
+ovarian_tbl_df %>%
+    vr_create_tableone() %>%
+    vr_render_tableone(
+      title = "Ovarian Patients",
+      caption = "",
+      data_source = "Survival Package"
+    )
+```
+
+Or our stratified table with no overall column.
+```{r}
+ovarian_tbl_df %>%
+    vr_create_tableone(group_columns = "rx", overall = FALSE) %>%
+    vr_render_tableone(
+      title = "Ovarian Patients",
+      caption = "",
+      data_source = "Survival Package"
+    )
+```
+
+If you want to remove certain summary statistics (e.g. Min-Max), just filter those out directly from the data frame returned by `vr_create_table_one`
+```{r}
+ovarian_tbl_df %>%
+    vr_create_tableone() %>%
+    dplyr::filter(!statistic %in% c("Min-Max")) %>%
+    vr_render_tableone(
+        title = "Ovarian Patients",
+        caption = "",
+        data_source = "Survival Package"
+    )
+```
+
+We can also update the variable names with nicer labels using the `vr_var_label` helper function. To label a variable just pass your data frame and a named list with variable labels. Any variables without label will use the variable name.
+```{r}
+ovarian_tbl_df %>%
+    vr_var_label(
+        list(
+            "age" = "Age (years)",
+            "age_group" = "Age Groups (years)",
+            "futime" = "Followup Time"
+        )
+    ) %>%
+    vr_create_tableone() %>%
+    dplyr::filter(!statistic %in% c("Min-Max")) %>%
+    vr_render_tableone(
+        title = "Ovarian Patients",
+        caption = "",
+        data_source = "Survival Package"
+    )
+```
+
