@@ -12,7 +12,7 @@
 #' If NULL, only overall results are returned
 #' @param overall If TRUE, the summary statistics for the overall data set are also calculated 
 #' @param summary_function A function defining summary statistics for numeric and categorical values
-#' 
+#' @param add_p_val A logical value to add p values if a single grouping column is used.
 #' @details It is possible to provide your own summary function. Please have a loot at vr_summary for inspiration.
 #' 
 #' @note All columns in the table will be summarized. 
@@ -37,7 +37,8 @@
 
 vr_create_tableone <- function(dat,
                                group_columns = NULL, overall = TRUE,
-                               summary_function = vr_summarize_tab1) {
+                               summary_function = vr_summarize_tab1,
+                               add_p_val = FALSE) {
   
   if (is.null(group_columns) & !overall) {
     stop("Overall and group columns can not both be missing/False")
@@ -66,6 +67,26 @@ vr_create_tableone <- function(dat,
     table1 <- table1_overall %>%
       left_join(table1_grouped, by = c("variable", "statistic"))
     
+  }
+  
+  # Add p-value calculations
+  if (add_p_val & length(group_columns) == 1) {
+    
+    p_vals <- dat %>%
+      dplyr::summarise_all(vr_p_val, dat[[group_columns]]) %>%
+      tidyr::gather(
+        key = "variable",
+        value = "p.value"
+      )
+    
+    table1 <- table1 %>%
+      dplyr::left_join(p_vals, by = "variable") %>%
+      # only keep first p.value record for each variable
+      group_by(variable) %>%
+      mutate(p.value = if_else(
+        !is.na(p.value) & row_number() == 1, p.value, "")
+      ) %>%
+      ungroup()
   }
   
   # get and add variable labels if they have labels set

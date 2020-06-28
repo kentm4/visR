@@ -8,7 +8,8 @@ vr_create_tableone(
   dat,
   group_columns = NULL,
   overall = TRUE,
-  summary_function = vr_summarize_tab1
+  summary_function = vr_summarize_tab1,
+  add_p_val = FALSE
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ If NULL, only overall results are returned}
 \item{overall}{If TRUE, the summary statistics for the overall data set are also calculated}
 
 \item{summary_function}{A function defining summary statistics for numeric and categorical values}
+
+\item{add_p_val}{A logical value to add p values if a single grouping column is used.}
 }
 \description{
 Create a summary table of descriptive statistics from a data frame or tibble.
