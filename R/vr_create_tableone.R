@@ -80,6 +80,7 @@ vr_create_tableone <- function(dat,
   
   # Add p-value calculations
   if (add_p_val & length(group_columns) == 1) {
+    
     if(!is.null(p_val_test)) {
       valid_cont_test <- c("t.test", "wilcox.test", "kruskal.test")
       valid_factor_tests <- c("chisq.test", "fisher.test")
@@ -100,8 +101,7 @@ vr_create_tableone <- function(dat,
     }
 
     p_vals <- dat %>%
-      dplyr::summarise_all(vr_p_val, dat[[group_columns]],
-                           p_val_test) %>%
+      dplyr::summarise_all(calc_p_val, dat[[group_columns]], p_val_test) %>%
       tidyr::gather(
         key = "variable",
         value = "p.value"
