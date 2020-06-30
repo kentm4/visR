@@ -9,7 +9,8 @@ vr_create_tableone(
   group_columns = NULL,
   overall = TRUE,
   summary_function = vr_summarize_tab1,
-  add_p_val = FALSE
+  add_p_val = FALSE,
+  p_val_test = NULL
 )
 }
 \arguments{
@@ -23,6 +24,17 @@ If NULL, only overall results are returned}
 \item{summary_function}{A function defining summary statistics for numeric and categorical values}
 
 \item{add_p_val}{A logical value to add p values if a single grouping column is used.}
+
+\item{p_val_test}{A named vector indicating which test to use for continuous variables
+and for factor variables (e.g. c("continuous" = "t.test", "factor" = "chisq.test")).
+The default is \code{"kruskal.test"} and \code{"chisq.test"} All options include:
+\itemize{
+\item \code{"t.test"} for a t-test
+\item \code{"wilcox.test"} for a Wilcoxon rank-sum test
+\item \code{"kruskal.test"} for a Kruskal-Wallis rank-sum test
+\item \code{"chisq.test"} for a chi-squared test of independence
+\item \code{"fisher.test"} for a Fisher's exact test
+}}
 }
 \description{
 Create a summary table of descriptive statistics from a data frame or tibble.

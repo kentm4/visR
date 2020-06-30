@@ -13,6 +13,14 @@
 #' @param overall If TRUE, the summary statistics for the overall data set are also calculated 
 #' @param summary_function A function defining summary statistics for numeric and categorical values
 #' @param add_p_val A logical value to add p values if a single grouping column is used.
+#' @param p_val_test A named vector indicating which test to use for continuous variables
+#' and for factor variables (e.g. c("continuous" = "t.test", "factor" = "chisq.test")).
+#' The default is `"kruskal.test"` and `"chisq.test"` All options include:
+#' * `"t.test"` for a t-test
+#' * `"wilcox.test"` for a Wilcoxon rank-sum test
+#' * `"kruskal.test"` for a Kruskal-Wallis rank-sum test
+#' * `"chisq.test"` for a chi-squared test of independence
+#' * `"fisher.test"` for a Fisher's exact test
 #' @details It is possible to provide your own summary function. Please have a loot at vr_summary for inspiration.
 #' 
 #' @note All columns in the table will be summarized. 
@@ -38,7 +46,8 @@
 vr_create_tableone <- function(dat,
                                group_columns = NULL, overall = TRUE,
                                summary_function = vr_summarize_tab1,
-                               add_p_val = FALSE) {
+                               add_p_val = FALSE,
+                               p_val_test = NULL) {
   
   if (is.null(group_columns) & !overall) {
     stop("Overall and group columns can not both be missing/False")
@@ -71,9 +80,28 @@ vr_create_tableone <- function(dat,
   
   # Add p-value calculations
   if (add_p_val & length(group_columns) == 1) {
-    
+    if(!is.null(p_val_test)) {
+      valid_cont_test <- c("t.test", "wilcox.test", "kruskal.test")
+      valid_factor_tests <- c("chisq.test", "fisher.test")
+      
+      if (!p_val_test["continuous"] %in% valid_cont_test) {
+        stop(paste0("Continuous p-value test must be ",
+                    paste0(valid_cont_test, collapse = ", ")))
+      }
+      
+      if (!p_val_test["factor"] %in% valid_factor_tests) {
+        stop(paste0("Factor p-value test must be ",
+                    paste0(valid_factor_tests, collapse = ", ")))
+      }
+      
+    } else {
+      p_val_test <- c("continuous" = "kruskal.test",
+                      "factor" = "chisq.test")
+    }
+
     p_vals <- dat %>%
-      dplyr::summarise_all(vr_p_val, dat[[group_columns]]) %>%
+      dplyr::summarise_all(vr_p_val, dat[[group_columns]],
+                           p_val_test) %>%
       tidyr::gather(
         key = "variable",
         value = "p.value"
